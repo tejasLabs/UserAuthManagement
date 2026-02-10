@@ -4,7 +4,7 @@ import java.time.Instant;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
-import jakarta.persistence.OneToMany;
+import jakarta.persistence.OneToOne;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NonNull;
@@ -14,8 +14,7 @@ import lombok.NonNull;
 @EqualsAndHashCode(callSuper = true)
 public class Subscription extends BaseModel {
 
-    @NonNull
-    @OneToMany(mappedBy = "subscription")
+    @OneToOne(mappedBy = "subscription")
     private User user;
 
     @NonNull
