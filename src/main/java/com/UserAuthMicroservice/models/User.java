@@ -13,7 +13,6 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
 import lombok.Setter;
 
 @Getter
@@ -25,18 +24,19 @@ import lombok.Setter;
 @Table(name = "users")
 public class User extends BaseModel {
 
-    @NonNull
     @Column(nullable = false)
     private String username;
 
-    @NonNull
+
     @Column(nullable = false, unique = true)
     private String email;
 
     @ManyToMany(fetch = FetchType.EAGER)
     private Set<Role> roles = new HashSet<>();
 
-    @NonNull
+    @Column(nullable = false)
+    private String password;
+
     @OneToOne(optional = false)
     private Subscription subscription;
 

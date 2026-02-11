@@ -9,7 +9,6 @@ import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.NonNull;
 import lombok.Setter;
 
 @Getter
@@ -23,10 +22,8 @@ public class Subscription extends BaseModel {
     @OneToOne(mappedBy = "subscription")
     private User user;
 
-    @NonNull
     private SubscriptionType subscriptionType = SubscriptionType.FREE;
     
-    @NonNull
     @Column(nullable=false)
     private Instant startDate;
 
