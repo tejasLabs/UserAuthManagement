@@ -4,6 +4,7 @@ import java.time.Instant;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.JoinColumn;
 import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
@@ -20,6 +21,7 @@ import lombok.Setter;
 public class Subscription extends BaseModel {
 
     @OneToOne(mappedBy = "subscription")
+    @JoinColumn(name = "user_id", referencedColumnName = "id")
     private User user;
 
     private SubscriptionType subscriptionType = SubscriptionType.FREE;
@@ -27,6 +29,6 @@ public class Subscription extends BaseModel {
     @Column(nullable=false)
     private Instant startDate;
 
-    private Instant endDate = null;
+    private Instant endDate = Instant.now();
 
 }
