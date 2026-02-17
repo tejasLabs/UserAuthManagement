@@ -20,6 +20,7 @@ import com.userauthenticationmicroservice.models.Status;
 import com.userauthenticationmicroservice.models.Subscription;
 import com.userauthenticationmicroservice.models.SubscriptionType;
 import com.userauthenticationmicroservice.models.User;
+import com.userauthenticationmicroservice.repositories.RoleRepository;
 import com.userauthenticationmicroservice.repositories.UserRepository;
 
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,8 @@ import lombok.RequiredArgsConstructor;
 public class AuthServiceImpl implements AuthService {
 
     private final UserRepository userRepository;
+
+    private final RoleRepository roleRepository;
 
     private final PasswordEncoder passwordEncoder;
 
@@ -56,8 +59,13 @@ public class AuthServiceImpl implements AuthService {
         newUser.setEmail(email);
         newUser.setPassword(hashedPassword);
 
-        Role defaultRole = new Role();
-        defaultRole.setValue(DEFAULT_ROLE_VALUE);
+        //Get the default role from the database to avoid duplicates in Role table and assign it to the new user. If the default role doesn't exist, create it and then assign it to the user.
+        Role defaultRole = roleRepository.findByValue(DEFAULT_ROLE_VALUE)
+                                            .orElseGet(() -> {
+                                                Role role = new Role();
+                                                role.setValue(DEFAULT_ROLE_VALUE);
+                                                return roleRepository.save(role);
+                                            });
         Set<Role> roles = new HashSet<>();
         roles.add(defaultRole);
         newUser.setRoles(roles);

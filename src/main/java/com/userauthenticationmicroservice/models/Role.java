@@ -1,5 +1,6 @@
 package com.userauthenticationmicroservice.models;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
@@ -20,7 +21,7 @@ public class Role {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    //Every user will have at least NORMAL role by default
+    @Column(nullable = false, unique = true, length=32)
     private String value = "NORMAL"; //Examples:"ADMIN", "MODERATOR",etc.
 
     public Role(String value) {

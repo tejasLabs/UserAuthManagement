@@ -31,8 +31,6 @@ public class User extends BaseModel {
     @Column(nullable = false, unique = true)
     private String email;
 
-    // Setting CascadeType.ALL to ensure that all operations (persist, merge,
-    // remove, refresh, detach) are cascaded to the associated Role entity
     @ManyToMany(fetch = FetchType.LAZY)
     @JoinTable(name = "users_roles",
             joinColumns = @JoinColumn(name = "user_id"),
@@ -42,10 +40,9 @@ public class User extends BaseModel {
     @Column(nullable = false)
     private String password;
 
-    // Set subscription_id as the foreign key to Subscription table
-    // Setting CascadeType.ALL to ensure that all operations (persist, merge,
-    // remove, refresh, detach) are cascaded to the associated Subscription entity
-    @OneToOne(cascade = CascadeType.ALL, optional = false)
+    // Set subscription_id as the foreign key to Subscription table. Setting CascadeType.ALL to ensure that all operations (persist, merge, remove, refresh, detach) are cascaded to the associated Subscription entity.
+    // Setting orphanRemoval=true to automatically delete the associated Subscription when a User is deleted, ensuring data integrity and preventing orphaned records in the Subscription table.
+    @OneToOne(cascade = CascadeType.ALL, orphanRemoval = true,optional = false)
     @JoinColumn(name = "subscription_id", referencedColumnName = "id", nullable = false)
     private Subscription subscription;
 
