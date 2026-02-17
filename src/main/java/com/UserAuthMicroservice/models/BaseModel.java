@@ -3,11 +3,11 @@ package com.UserAuthMicroservice.models;
 import java.time.Instant;
 import java.util.UUID;
 
+import org.hibernate.annotations.UuidGenerator;
+
 import jakarta.persistence.Column;
 import jakarta.persistence.EnumType;
 import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.PrePersist;
@@ -18,9 +18,9 @@ import lombok.Data;
 @MappedSuperclass
 @Data
 public abstract class BaseModel {
-
+    //Use UUID v7 for better performance and scalability compare to UUID v4 as it is time-ordered and optimized. This will improve database indexing and query performance, especially as the number of records grows.
     @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
+    @UuidGenerator(style = UuidGenerator.Style.TIME)
     private UUID id;
 
     @Column(nullable=false, updatable = false)
