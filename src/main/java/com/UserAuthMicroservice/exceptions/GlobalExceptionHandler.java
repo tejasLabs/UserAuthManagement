@@ -12,16 +12,15 @@ import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.ConstraintViolationException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    // Handle User related exceptions and return appropriate response with status
-    // code and details of the error
-    // in the ProblemDetail spring framework class which provides a standardized
-    // format for error responses in RESTful APIs
+    // Handle User related exceptions and return appropriate response with status code and details of the error in the ProblemDetail spring framework class which provides a standardized format for error responses in RESTful APIs
     @ExceptionHandler(UserAlreadyExistsException.class)
     public ResponseEntity<ProblemDetail> handleUserExceptions(UserAlreadyExistsException e,
             HttpServletRequest request) {
@@ -43,6 +42,17 @@ public class GlobalExceptionHandler {
         problemDetail.setProperty("timestamp", Instant.now());
         problemDetail.setProperty("traceId", UUID.randomUUID().toString());
         return ResponseEntity.status(HttpStatus.NOT_FOUND).body(problemDetail);
+    }
+
+    @ExceptionHandler(UserSuspendedException.class)
+    public ResponseEntity<ProblemDetail> handleUserExceptions(UserSuspendedException e, HttpServletRequest request) {
+        ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
+        problemDetail.setDetail(e.getMessage());
+        problemDetail.setTitle("User account is suspended");
+        problemDetail.setInstance(URI.create(request.getRequestURI()));
+        problemDetail.setProperty("timestamp", Instant.now());
+        problemDetail.setProperty("traceId", UUID.randomUUID().toString());
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problemDetail);
     }
 
     @ExceptionHandler(WrongPasswordException.class)
@@ -91,9 +101,19 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problemDetail);
     }
 
-    // Fallback handler for any other unhandled exceptions that may occur in the
-    // application, returning a generic error response with status code 500 Internal
-    // Server Error and the exception message in the response body.
+    //Possible exception when a path variable is expected to be of a certain type (e.g., UUID) but the client provides a value that cannot be converted to that type, resulting in a MethodArgumentTypeMismatchException. This handler will catch such exceptions and return a 400 Bad Request response with a message indicating the invalid path variable.
+    @ExceptionHandler(MethodArgumentTypeMismatchException.class)
+    public ResponseEntity<String> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
+        return ResponseEntity.badRequest().body("Invalid path variable: " + ex.getValue());
+    }
+
+    // Handle validation exceptions that occur when method parameters annotated with validation constraints (e.g., @NotNull, @Size) are violated, resulting in a ConstraintViolationException. This handler will catch such exceptions and return a 400 Bad Request response with a message indicating the validation failure.
+    @ExceptionHandler(ConstraintViolationException.class)
+    public ResponseEntity<String> handleConstraintViolation(ConstraintViolationException ex) {
+        return ResponseEntity.badRequest().body("Validation failed: " + ex.getMessage());
+    }
+
+    // Fallback handler for any other unhandled exceptions that may occur in the application, returning a generic error response with status code 500 Internal Server Error and the exception message in the response body.
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ProblemDetail> handleUserExceptions(Exception e, HttpServletRequest request) {
         ProblemDetail problemDetail = ProblemDetail.forStatus(HttpStatus.INTERNAL_SERVER_ERROR);
