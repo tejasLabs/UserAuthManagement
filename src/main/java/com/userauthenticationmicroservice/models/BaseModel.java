@@ -3,6 +3,7 @@ package com.userauthenticationmicroservice.models;
 import java.time.Instant;
 import java.util.UUID;
 
+import org.hibernate.Hibernate;
 import org.hibernate.annotations.UuidGenerator;
 
 import jakarta.persistence.Column;
@@ -12,11 +13,13 @@ import jakarta.persistence.Id;
 import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.PrePersist;
 import jakarta.persistence.PreUpdate;
-import lombok.Data;
+import lombok.Getter;
+import lombok.Setter;
 
 
 @MappedSuperclass
-@Data
+@Getter
+@Setter
 public abstract class BaseModel {
     //Use UUID v7 for better performance and scalability compare to UUID v4 as it is time-ordered and optimized. This will improve database indexing and query performance, especially as the number of records grows.
     @Id
@@ -43,5 +46,17 @@ public abstract class BaseModel {
     @PreUpdate
     protected void onUpdate(){
         this.updatedAt = Instant.now();
+    }
+
+    @Override
+    public final boolean equals(Object o){
+        if(this == o) return true;
+        if(o == null || Hibernate.getClass(this) != Hibernate.getClass(o)) return false;
+        BaseModel that = (BaseModel)o;
+        return this.id != null && this.id.equals(that.id);
+    }
+
+    @Override public final int hashCode(){
+        return (id!=null)? id.hashCode() : Hibernate.getClass(this).hashCode();
     }
 }
