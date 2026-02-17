@@ -8,5 +8,5 @@ public record UserResponseDTO (
     UUID id,
     String username,
     String email,
-    Set<RoleDTO> roles
+    Set<String> roles
 ) {}

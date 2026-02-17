@@ -8,11 +8,12 @@ import java.util.Set;
 
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
-import com.UserAuthMicroservice.dtos.RoleDTO;
 import com.UserAuthMicroservice.dtos.UserResponseDTO;
 import com.UserAuthMicroservice.exceptions.UserAlreadyExistsException;
 import com.UserAuthMicroservice.exceptions.UserNotFoundException;
+import com.UserAuthMicroservice.exceptions.UserSuspendedException;
 import com.UserAuthMicroservice.exceptions.WrongPasswordException;
 import com.UserAuthMicroservice.models.Role;
 import com.UserAuthMicroservice.models.Status;
@@ -34,22 +35,22 @@ public class AuthService implements IAuthService {
     private static final String DEFAULT_ROLE_VALUE = "NORMAL";
 
     @Override
+    @Transactional
     public UserResponseDTO signup(String username, String email, String password) {
         Optional<User> existingUser = userRepository.findByEmail(email);
-        if (existingUser.isPresent()) {
-            throw new UserAlreadyExistsException();
+        //Allow signup if no user exists with the email provided or if existing user if marked for deletion.
+        if (existingUser.isPresent() && !existingUser.get().getStatus().equals(Status.DELETED)) {
+                throw new UserAlreadyExistsException();
         }
 
-        // Trim extra spaces in username and normalize it to NFC form to prevent issues
-        // with Unicode characters
+        //Trim extra spaces in username and normalize it to NFC form to prevent issues with Unicode characters
         String usernameToUse = username.trim();
         usernameToUse = Normalizer.normalize(usernameToUse, Normalizer.Form.NFC);
 
-        // Create a hash of the password using the default password Encoder before
-        // persisting it to the database
+        //Create a hash of the password using the default password Encoder before persisting it to the database
         String hashedPassword = passwordEncoder.encode(password);
 
-        // Create a new user with provided details and populate the fields
+        //Create a new user with provided details and populate the fields
         User newUser = new User();
         newUser.setUsername(usernameToUse);
         newUser.setEmail(email);
@@ -68,10 +69,7 @@ public class AuthService implements IAuthService {
         subscription.setStatus(Status.INACTIVE); //All FREE tier subscriptions will be INACTIVE by default until user upgrades to a paid tier.
         newUser.setSubscription(subscription);
 
-        // Persist the new user to the database and return a UserResponseDTO
-        // Since CascadeType.ALL is set on the subscription field in User entity, the
-        // associated Subscription entity will also be persisted automatically when we
-        // save the User entity
+        // Persist the new user to the database and return a UserResponseDTO. Since CascadeType.ALL is set on the subscription field in User entity, the associated Subscription entity will also be persisted automatically when we save the User entity
         userRepository.save(newUser);
 
         return convertToDTO(newUser);
@@ -80,8 +78,11 @@ public class AuthService implements IAuthService {
     @Override
     public UserResponseDTO login(String email, String password) {
         Optional<User> userOptional = userRepository.findByEmail(email);
-        if (userOptional.isEmpty()) {
+        if (userOptional.isEmpty() || userOptional.get().getStatus().equals(Status.DELETED)) {
             throw new UserNotFoundException();
+        }
+        if(userOptional.get().getStatus().equals(Status.SUSPENDED)){
+            throw new UserSuspendedException();
         }
         User user = userOptional.get();
 
@@ -93,10 +94,10 @@ public class AuthService implements IAuthService {
     }
 
     private UserResponseDTO convertToDTO(User user) {
-        Set<RoleDTO> roleDTOSet = new HashSet<>();
+        Set<String> rolesSet = new HashSet<>();
         for (Role role : user.getRoles()) {
-            roleDTOSet.add(new RoleDTO(role.getValue()));
+            rolesSet.add(role.getValue());
         }
-        return new UserResponseDTO(user.getId(), user.getUsername(), user.getEmail(), roleDTOSet);
+        return new UserResponseDTO(user.getId(), user.getUsername(), user.getEmail(), rolesSet);
     }
 }

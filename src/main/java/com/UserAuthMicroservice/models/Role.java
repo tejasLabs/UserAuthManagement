@@ -17,10 +17,11 @@ import lombok.Setter;
 public class Role {
     
     @Id
-    @GeneratedValue(strategy = GenerationType.AUTO)
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    private String value; //Examples: "NORMAL", "ADMIN"
+    //Every user will have at least NORMAL role by default
+    private String value = "NORMAL"; //Examples:"ADMIN", "MODERATOR",etc.
 
     public Role(String value) {
         this.value = value;
