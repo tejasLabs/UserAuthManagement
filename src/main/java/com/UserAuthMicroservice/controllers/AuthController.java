@@ -14,13 +14,14 @@ import com.UserAuthMicroservice.dtos.UserResponseDTO;
 import com.UserAuthMicroservice.services.IAuthService;
 
 import jakarta.validation.Valid;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/auth/v1")
+@RequiredArgsConstructor
 public class AuthController {
 
-    @Autowired
-    private IAuthService authService;
+    private final IAuthService authService;
 
     // Signup endpoint: returns 201 Created HttpStatus code with user details
     // (excluding password)

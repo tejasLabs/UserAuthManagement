@@ -19,16 +19,17 @@ import com.UserAuthMicroservice.services.SubscriptionService;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
+import lombok.RequiredArgsConstructor;
 
 @Validated
 @RestController
 @RequestMapping("subscriptions/v1")
+@RequiredArgsConstructor
 public class SubscriptionController {
 
-    @Autowired
-    private SubscriptionService subscriptionService;
+    private final SubscriptionService subscriptionService;
 
-    //Get user's subscriptoin details
+    //Get user's subscription details
     @GetMapping("/{userId}")
     public ResponseEntity<SubscriptionResponseDTO> getSubscriptionUsingUserId(@NotNull @PathVariable UUID userId){
         return ResponseEntity.status(HttpStatus.OK).body(subscriptionService.getSubscriptionDetails(userId));
