@@ -23,11 +23,13 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@Transactional
 public class SubscriptionService {
 
     private final SubscriptionRepository subscriptionRepository;
     private final UserRepository userRepository;
 
+    @Transactional(readOnly = true)
     public SubscriptionResponseDTO getSubscriptionDetails(@NonNull UUID userId) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty() || userOpt.get().getStatus().equals(Status.DELETED)) {
@@ -44,7 +46,6 @@ public class SubscriptionService {
         return convertToDTO(subscription);
     }
 
-    @Transactional
     public SubscriptionResponseDTO updateSubscription(@NonNull UUID userId, String subscriptionType, Instant endDate) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty() || userOpt.get().getStatus().equals(Status.DELETED)) {
@@ -61,12 +62,16 @@ public class SubscriptionService {
 
         subscription.setSubscriptionType(SubscriptionType.valueOf(subscriptionType));
         subscription.setStatus(Status.ACTIVE);
-        subscription.setEndDate(endDate);
+        if(subscriptionType.equals(SubscriptionType.LIFETIME.toString())){
+            subscription.setEndDate(null);
+        }
+        else{
+            subscription.setEndDate(endDate);
+        }
         subscriptionRepository.save(subscription);
         return convertToDTO(subscription);
     }
 
-    @Transactional
     public SubscriptionResponseDTO removeSubscription(@NonNull UUID userId) {
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty() || userOpt.get().getStatus().equals(Status.DELETED)) {

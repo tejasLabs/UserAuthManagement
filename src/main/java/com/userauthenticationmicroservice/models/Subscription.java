@@ -4,6 +4,8 @@ import java.time.Instant;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
 import jakarta.persistence.OneToOne;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -20,6 +22,8 @@ public class Subscription extends BaseModel {
     @OneToOne(mappedBy = "subscription")
     private User user;
 
+    @Enumerated(EnumType.STRING)
+    @Column(nullable=false, length = 16)
     private SubscriptionType subscriptionType = SubscriptionType.FREE;
     
     @Column(nullable=false)

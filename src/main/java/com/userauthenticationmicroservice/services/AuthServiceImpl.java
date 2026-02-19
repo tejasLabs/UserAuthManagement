@@ -84,6 +84,7 @@ public class AuthServiceImpl implements AuthService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public UserResponseDTO login(String email, String password) {
         Optional<User> userOptional = userRepository.findByEmail(email);
         if (userOptional.isEmpty() || userOptional.get().getStatus().equals(Status.DELETED)) {
