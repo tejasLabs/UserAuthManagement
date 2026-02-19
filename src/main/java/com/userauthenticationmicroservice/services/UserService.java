@@ -1,19 +1,23 @@
 package com.userauthenticationmicroservice.services;
 
 import java.text.Normalizer;
+import java.util.HashSet;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.Set;
 import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.userauthenticationmicroservice.dtos.RoleResponseDTO;
 import com.userauthenticationmicroservice.dtos.UserResponseDTO;
 import com.userauthenticationmicroservice.exceptions.UserNotFoundException;
 import com.userauthenticationmicroservice.exceptions.UserSuspendedException;
 import com.userauthenticationmicroservice.models.Role;
 import com.userauthenticationmicroservice.models.Status;
 import com.userauthenticationmicroservice.models.User;
+import com.userauthenticationmicroservice.repositories.RoleRepository;
 import com.userauthenticationmicroservice.repositories.UserRepository;
 
 import lombok.NonNull;
@@ -25,6 +29,24 @@ import lombok.RequiredArgsConstructor;
 public class UserService {
 
     private final UserRepository userRepository;
+
+    private final RoleRepository roleRepository;
+
+    public RoleResponseDTO getUserRoles(@NonNull UUID userId){
+        Optional<User> userOpt = userRepository.findById(userId);
+        if (userOpt.isEmpty() || userOpt.get().getStatus().equals(Status.DELETED)) {
+            throw new UserNotFoundException();
+        }
+        else if(userOpt.get().getStatus().equals(Status.SUSPENDED)){
+            throw new UserSuspendedException();
+        }
+        User user = userOpt.get();
+        Set<String> roleValues = new HashSet<>();
+        for(Role role:user.getRoles()){
+            roleValues.add(role.getValue());
+        }
+        return new RoleResponseDTO(userId, roleValues);
+    }
     
     public UserResponseDTO updateUserName(@NonNull UUID userId, String newUserName) {
         Optional<User> userOpt = userRepository.findById(userId);
@@ -56,7 +78,9 @@ public class UserService {
         }
 
         User user = userOpt.get();
-        user.getRoles().add(new Role(newRole));
+        Role roleToAdd = roleRepository.findByValue(newRole)
+                                            .orElseGet(() -> roleRepository.save(new Role(newRole)));
+        user.getRoles().add(roleToAdd);
         userRepository.save(user);
         return converToDTO(user);
     }
@@ -72,11 +96,6 @@ public class UserService {
 
         User user = userOpt.get();
         user.getRoles().removeIf(role -> Objects.equals(role.getValue(), roleToRemove));
-
-        //Ensure that user always has at least NORMAL role
-        Role role = new Role("NORMAL");
-        if(!user.getRoles().contains(role))
-            user.getRoles().add(role);
 
         userRepository.save(user);
         return null;

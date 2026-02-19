@@ -9,11 +9,13 @@ import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
 import com.userauthenticationmicroservice.dtos.RoleRequestDTO;
+import com.userauthenticationmicroservice.dtos.RoleResponseDTO;
 import com.userauthenticationmicroservice.dtos.UserNameRequestDTO;
 import com.userauthenticationmicroservice.dtos.UserResponseDTO;
 import com.userauthenticationmicroservice.services.UserService;
@@ -21,6 +23,7 @@ import com.userauthenticationmicroservice.services.UserService;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
+import org.springframework.web.bind.annotation.GetMapping;
 
 @RestController
 @RequestMapping("/users/v1")
@@ -29,15 +32,20 @@ import lombok.RequiredArgsConstructor;
 public class UserController {
 
     private final UserService userService;
-    
+
+    @GetMapping("/roles/{userId}")
+    public ResponseEntity<RoleResponseDTO> getUserRoles(@PathVariable @NotNull UUID userId){
+        return ResponseEntity.status(HttpStatus.OK).body(userService.getUserRoles(userId));
+    }
+
     @PatchMapping("/update/username")
     public ResponseEntity<UserResponseDTO> updateUserName(@Valid @RequestBody UserNameRequestDTO userNameRequestDTO){
         return ResponseEntity.status(HttpStatus.OK).body(userService.updateUserName(userNameRequestDTO.userId(), userNameRequestDTO.username()));
     }
 
-    @PatchMapping("/add/roles")
+    @PostMapping("/add/roles")
     public ResponseEntity<UserResponseDTO> addUserRole(@Valid @RequestBody RoleRequestDTO roleRequestDTO){
-        return ResponseEntity.status(HttpStatus.OK).body(userService.addUserRole(roleRequestDTO.userId(), roleRequestDTO.role()));
+        return ResponseEntity.status(HttpStatus.CREATED).body(userService.addUserRole(roleRequestDTO.userId(), roleRequestDTO.role()));
     }
 
     @DeleteMapping("/remove/roles")
