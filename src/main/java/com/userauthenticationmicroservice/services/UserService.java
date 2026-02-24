@@ -129,7 +129,8 @@ public class UserService {
             user.getId(),
             user.getUsername(),
             user.getEmail(),
-            user.getRoles().stream().map(role -> role.getValue()).collect(java.util.stream.Collectors.toSet())
+            user.getRoles().stream().map(role -> role.getValue()).collect(java.util.stream.Collectors.toSet()),
+            null
         );
     }
 }

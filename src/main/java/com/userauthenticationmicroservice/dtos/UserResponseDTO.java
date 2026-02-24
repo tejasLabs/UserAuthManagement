@@ -8,5 +8,6 @@ public record UserResponseDTO (
     UUID id,
     String username,
     String email,
-    Set<String> roles
+    Set<String> roles,
+    String token
 ) {}

@@ -4,5 +4,6 @@ public enum Status {
     ACTIVE,
     INACTIVE,
     SUSPENDED,
-    DELETED
+    DELETED,
+    EMAIL_NOT_VERIFIED
 }

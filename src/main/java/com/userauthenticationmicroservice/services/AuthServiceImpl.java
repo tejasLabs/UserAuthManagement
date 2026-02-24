@@ -6,11 +6,19 @@ import java.util.HashSet;
 import java.util.Optional;
 import java.util.Set;
 
+import org.springframework.security.authentication.AccountExpiredException;
+import org.springframework.security.authentication.AuthenticationManager;
+import org.springframework.security.authentication.BadCredentialsException;
+import org.springframework.security.authentication.DisabledException;
+import org.springframework.security.authentication.LockedException;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.userauthenticationmicroservice.dtos.UserResponseDTO;
+import com.userauthenticationmicroservice.exceptions.EmailNotVerifiedException;
 import com.userauthenticationmicroservice.exceptions.UserAlreadyExistsException;
 import com.userauthenticationmicroservice.exceptions.UserNotFoundException;
 import com.userauthenticationmicroservice.exceptions.UserSuspendedException;
@@ -22,6 +30,8 @@ import com.userauthenticationmicroservice.models.SubscriptionType;
 import com.userauthenticationmicroservice.models.User;
 import com.userauthenticationmicroservice.repositories.RoleRepository;
 import com.userauthenticationmicroservice.repositories.UserRepository;
+import com.userauthenticationmicroservice.security.CustomUserDetails;
+import com.userauthenticationmicroservice.security.JwtService;
 
 import lombok.RequiredArgsConstructor;
 
@@ -34,6 +44,10 @@ public class AuthServiceImpl implements AuthService {
     private final RoleRepository roleRepository;
 
     private final PasswordEncoder passwordEncoder;
+
+    private final JwtService jwtService;
+
+    private final AuthenticationManager authenticationManager;
 
     private static final String DEFAULT_ROLE_VALUE = "NORMAL";
 
@@ -77,36 +91,59 @@ public class AuthServiceImpl implements AuthService {
         subscription.setStatus(Status.INACTIVE); //All FREE tier subscriptions will be INACTIVE by default until user upgrades to a paid tier.
         newUser.setSubscription(subscription);
 
-        // Persist the new user to the database and return a UserResponseDTO. Since CascadeType.ALL is set on the subscription field in User entity, the associated Subscription entity will also be persisted automatically when we save the User entity
+        //Persist the new user to the database and return a UserResponseDTO. Since CascadeType.ALL is set on the subscription field in User entity, the associated Subscription entity will also be persisted automatically when we save the User entity
         userRepository.save(newUser);
 
-        return convertToDTO(newUser);
+        final String jwtToken = jwtService.generateToken(new CustomUserDetails(newUser));
+
+        return convertToDTO(newUser,jwtToken);
     }
 
     @Override
     @Transactional(readOnly = true)
     public UserResponseDTO login(String email, String password) {
-        Optional<User> userOptional = userRepository.findByEmail(email);
-        if (userOptional.isEmpty() || userOptional.get().getStatus().equals(Status.DELETED)) {
-            throw new UserNotFoundException();
-        }
-        if(userOptional.get().getStatus().equals(Status.SUSPENDED)){
-            throw new UserSuspendedException();
-        }
-        User user = userOptional.get();
 
-        if (!passwordEncoder.matches(password, user.getPassword())) {
+        try{
+            authenticationManager.authenticate(new UsernamePasswordAuthenticationToken(email, password));
+        }
+        catch(BadCredentialsException e){
             throw new WrongPasswordException();
         }
+        catch(LockedException e){
+            throw new UserSuspendedException();
+        }
+        catch(AccountExpiredException e){
+            throw new UserNotFoundException();
+        }
+        catch(UsernameNotFoundException e){
+            throw new UserNotFoundException();
+        }
+        catch(DisabledException e){ //
+            throw new EmailNotVerifiedException();
+        }
 
-        return convertToDTO(user);
+        Optional<User> userOptional = userRepository.findByEmail(email);
+        if(userOptional.isEmpty() || userOptional.get().getStatus().equals(Status.DELETED)){
+            throw new UserNotFoundException();
+        }
+
+        //If user logs in after being marked as INACTIVE due to inactivity, set their status back to ACTIVE
+        User user = userOptional.get();
+        if(user.getStatus() == Status.INACTIVE){
+            user.setStatus(Status.ACTIVE); 
+            userRepository.save(user);
+        }
+        
+        final String jwtToken = jwtService.generateToken(new CustomUserDetails(user));
+
+        return convertToDTO(user,jwtToken);
     }
 
-    private UserResponseDTO convertToDTO(User user) {
+    private UserResponseDTO convertToDTO(User user, String jwtToken) {
         Set<String> rolesSet = new HashSet<>();
         for (Role role : user.getRoles()) {
             rolesSet.add(role.getValue());
         }
-        return new UserResponseDTO(user.getId(), user.getUsername(), user.getEmail(), rolesSet);
+        return new UserResponseDTO(user.getId(), user.getUsername(), user.getEmail(), rolesSet, jwtToken);
     }
 }

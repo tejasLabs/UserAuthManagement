@@ -22,8 +22,7 @@ public class AuthController {
 
     private final AuthService authService;
 
-    // Signup endpoint: returns 201 Created HttpStatus code with user details
-    // (excluding password)
+    //Signup endpoint: returns 201 Created HttpStatus code with user details (excluding password)
     @PostMapping("/signup")
     public ResponseEntity<UserResponseDTO> signup(@Valid @RequestBody SignupRequestDTO request){
         UserResponseDTO newUserDTO = authService.signup(request.username(), request.email(),
@@ -31,8 +30,7 @@ public class AuthController {
         return ResponseEntity.status(201).body(newUserDTO);
     }
 
-    // Login endpoint: returns 200 OK HttpStatus code with user details (excluding
-    // password) if successful, or 401 Unauthorized HttpStatus code if login failed
+    //Login endpoint: returns 200 OK HttpStatus code with user details (excluding password) if successful, or 401 Unauthorized HttpStatus code if login failed
     @PostMapping("/login")
     public ResponseEntity<UserResponseDTO> login(@Valid @RequestBody LoginRequestDTO request){
         UserResponseDTO loginDTO = authService.login(request.email(), request.password());

@@ -33,7 +33,7 @@ public abstract class BaseModel {
     private Instant updatedAt;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable=false, length = 16)
+    @Column(nullable=false, length = 20)
     private Status status = Status.ACTIVE;
 
     @PrePersist
