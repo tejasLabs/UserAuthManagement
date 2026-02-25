@@ -13,7 +13,7 @@
 	<artifactId>userauthenticationmicroservice</artifactId>
 	<version>0.0.1-SNAPSHOT</version>
 	<name>userauthenticationmicroservice</name>
-	<description>Demo project for Spring Boot</description>
+	<description>Microservice for user authentication and management with JWT and PostgreSQL</description>
 	<url />
 	<licenses>
 		<license />

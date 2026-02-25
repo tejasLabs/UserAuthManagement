@@ -32,6 +32,7 @@ public class UserService {
 
     private final RoleRepository roleRepository;
 
+    @Transactional(readOnly = true)
     public RoleResponseDTO getUserRoles(@NonNull UUID userId){
         Optional<User> userOpt = userRepository.findById(userId);
         if (userOpt.isEmpty() || userOpt.get().getStatus().equals(Status.DELETED)) {
